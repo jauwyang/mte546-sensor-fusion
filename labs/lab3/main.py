@@ -6,9 +6,6 @@ from enum import Enum
 from typing import List
 import math
 
-# cd Desktop\Projects\Programs\uw-courses\mte546-sensor-fusion\
-# python labs\lab3\main.py
-
 
 class MOTION_TYPE(Enum):
     STATIONARY = 1
@@ -30,26 +27,16 @@ motion = MOTION_TYPE.TILTED
 
 
 # New Qs
-Q_mat = np.array([[4, 5.76, 0.2], [5.76, 10, 0.9], [0.2, 0.9, 0.01]])  # GOOOOD
-# Q_mat = np.array(  # JASON'S BAD ONE
-#     [
-#         [0.018548541771278, 0.032342390287647, -0.605962817715705],
-#         [0.032342390287647, 1.732714927238333, 29.801855172595230],
-#         [0.605962817715705, 29.801855172595230, 1.551392820965659e03],
-#     ]
-# )
+Q_mat = np.array([[4, 5.76, 0.2], [5.76, 10, 0.9], [0.2, 0.9, 0.01]])
+
 
 Q_mat_sim = Q_mat
 
 R_mat = np.array([[0.000161625, 0], [0, 0.0011362222]])
 
 # simulated measurement noise
-# R1_mat = np.array([[0.000161625]])
-# R2_mat = np.array([[0.0011362222]])
-
-# condition 3
-R1_mat = np.array([[5]])
-R2_mat = np.array([[5]])
+R1_mat = np.array([[0.000161625]])
+R2_mat = np.array([[0.0011362222]])
 
 
 ## Noise Helper Functions
@@ -138,13 +125,6 @@ def sensor_long_v2d(v: float) -> float:
         -7.942430588138158 * v + 21.854787336053960 + 47.264760774084991 / v
     )
     return estimated_distance
-
-
-def fuse_sensors(v_med: float, v_long: float):
-    med_dist = sensor_medium_v2d(v_med)
-    long_dist = sensor_long_v2d(v_long)
-    # TODO: Kalman Filter
-    pass
 
 
 ## Plot graphs: all 3 states, as well as the certainty of the estimate
@@ -256,8 +236,8 @@ def plot_raw_exp_data_useless(different_traj_data: dict, case: MOTION_TYPE):
     plt.ylabel("Sensor Reading [V]")
     plt.grid(True)
     plt.show()
-    
-    
+
+
 def plot_states_uncertainty_overtime_exp(
     states: np.array, covariances: List, t_f: float, title: str = ""
     ):
@@ -300,9 +280,7 @@ def plot_states_uncertainty_overtime_exp(
 
     plt.tight_layout()
     plt.show()
-    
-    
-    
+
 
 
 def main():
@@ -321,7 +299,7 @@ def main():
     ekf.F = np.array([[1, T_ms, 0.5 * T_ms**2], [0, 1, T_ms], [0, 0, 1]])
     ekf.H = None
 
-    
+
     run_simulated = False
     if run_simulated:
         t = 0
@@ -364,8 +342,6 @@ def main():
 
         exp_data = load_matlab_data(experimental_data_path, diff_cases_paths)
         # plot_raw_exp_data_useless(exp_data, motion)
-        # print(motion)
-        # print(exp_data[motion])
 
         curr_traj_z_vals = np.array(exp_data[motion])  # [N, 2]
         z_exp = curr_traj_z_vals.T  # [2, N]
@@ -375,20 +351,17 @@ def main():
         for i in range(len(times_exp)):
             z = z_exp[:, i]
             z = z.reshape(-1, 1)
-            # print(z.shape)
 
             ekf.predict_update(z, HJacobian, Hx)
             posterior_state = ekf.x
 
             covariance = ekf.P
-            # print(f"Cov: {covariance}")
 
             estimated_states.append(posterior_state)
             covariances.append(ekf.P)
 
         t_f = times_exp[-1]
 
-        # print(true_pos.shape)
         plot_states_uncertainty_overtime_exp(
             np.hstack(estimated_states),
             covariances,
